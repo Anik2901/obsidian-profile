@@ -1,5 +1,8 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
+import BrutalistNav from "@/components/BrutalistNav";
+import BrutalistFooter from "@/components/BrutalistFooter";
+import BrutalistButton from "@/components/BrutalistButton";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,14 +12,19 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <BrutalistNav />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <p className="label-micro text-muted-foreground mb-4">Error</p>
+          <h1 className="text-[8rem] leading-none mb-4">404</h1>
+          <p className="text-lg text-muted-foreground mb-8">Route not found</p>
+          <Link to="/">
+            <BrutalistButton>Return Home</BrutalistButton>
+          </Link>
+        </div>
       </div>
+      <BrutalistFooter />
     </div>
   );
 };
