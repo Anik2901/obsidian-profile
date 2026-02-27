@@ -2,7 +2,8 @@ import BrutalistNav from "@/components/BrutalistNav";
 import BrutalistFooter from "@/components/BrutalistFooter";
 import BrutalistButton from "@/components/BrutalistButton";
 import DataRow from "@/components/DataRow";
-import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const accountSettings = [
   { label: "Email", value: "damien@nexus.io" },
@@ -11,7 +12,27 @@ const accountSettings = [
   { label: "Member Since", value: "2024-08-14" },
 ];
 
+interface PrefState {
+  label: string;
+  enabled: boolean;
+}
+
 const Settings = () => {
+  const [preferences, setPreferences] = useState<PrefState[]>([
+    { label: "Push Notifications", enabled: true },
+    { label: "Email Digest", enabled: false },
+    { label: "Stealth Mode", enabled: true },
+    { label: "Read Receipts", enabled: false },
+    { label: "Auto-Archive", enabled: true },
+  ]);
+
+  const togglePref = (index: number) => {
+    setPreferences((prev) =>
+      prev.map((p, i) => (i === index ? { ...p, enabled: !p.enabled } : p))
+    );
+    toast.success("Preference updated");
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <BrutalistNav />
@@ -30,25 +51,29 @@ const Settings = () => {
               <DataRow key={row.label} label={row.label} value={row.value} />
             ))}
             <div className="mt-8">
-              <BrutalistButton size="sm">Change Password</BrutalistButton>
+              <BrutalistButton size="sm" onClick={() => toast.info("Password change dialog would open here")}>
+                Change Password
+              </BrutalistButton>
             </div>
           </div>
 
           {/* Preferences */}
           <div>
             <h2 className="label-micro text-muted-foreground mb-8">Preferences</h2>
-
-            <div className="space-y-0">
-              {[
-                { label: "Push Notifications", enabled: true },
-                { label: "Email Digest", enabled: false },
-                { label: "Stealth Mode", enabled: true },
-                { label: "Read Receipts", enabled: false },
-                { label: "Auto-Archive", enabled: true },
-              ].map((pref) => (
+            <div>
+              {preferences.map((pref, i) => (
                 <div key={pref.label} className="flex items-center justify-between py-3 brutalist-separator">
-                  <span className="text-xs uppercase tracking-wider text-zinc-600">{pref.label}</span>
-                  <Switch defaultChecked={pref.enabled} />
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">{pref.label}</span>
+                  <button
+                    onClick={() => togglePref(i)}
+                    className={`label-micro px-3 py-1 border transition-all duration-200 ${
+                      pref.enabled
+                        ? "border-foreground text-foreground"
+                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {pref.enabled ? "ON" : "OFF"}
+                  </button>
                 </div>
               ))}
             </div>
@@ -57,7 +82,7 @@ const Settings = () => {
           {/* Privacy */}
           <div>
             <h2 className="label-micro text-muted-foreground mb-8">Privacy</h2>
-            <div className="space-y-0">
+            <div>
               {[
                 { label: "Profile Visibility", value: "Verified Only" },
                 { label: "Search Indexing", value: "Disabled" },
@@ -76,8 +101,14 @@ const Settings = () => {
               These actions are irreversible. Proceed with caution.
             </p>
             <div className="flex gap-3">
-              <BrutalistButton size="sm">Export Data</BrutalistButton>
-              <BrutalistButton size="sm" className="border-destructive text-destructive hover:bg-destructive hover:text-foreground">
+              <BrutalistButton size="sm" onClick={() => toast.success("Data export initiated")}>
+                Export Data
+              </BrutalistButton>
+              <BrutalistButton
+                size="sm"
+                onClick={() => toast.error("Account deletion is disabled in demo mode")}
+                className="border-destructive text-destructive hover:bg-destructive hover:text-foreground"
+              >
                 Delete Account
               </BrutalistButton>
             </div>

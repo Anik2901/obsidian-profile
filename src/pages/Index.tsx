@@ -7,11 +7,8 @@ import ConversationItem from "@/components/ConversationItem";
 import BrutalistFooter from "@/components/BrutalistFooter";
 import BrutalistNav from "@/components/BrutalistNav";
 import avatarMain from "@/assets/avatar-main.jpg";
-import match1 from "@/assets/match-1.jpg";
-import match2 from "@/assets/match-2.jpg";
-import match3 from "@/assets/match-3.jpg";
-import match4 from "@/assets/match-4.jpg";
-import match6 from "@/assets/match-6.jpg";
+import { matchProfiles, conversationThreads } from "@/data/profiles";
+import { Link } from "react-router-dom";
 
 const interests = ["Architecture", "Systems Design", "Brutalism", "Typography", "Monochrome", "Data Viz", "Minimalism", "Terminal"];
 
@@ -24,23 +21,10 @@ const configData = [
   { label: "Mode", value: "Stealth" },
 ];
 
-const matches = [
-  { image: match1, name: "Elara Voss", score: "97.2% match" },
-  { image: match2, name: "Marcus Chen", score: "94.8% match" },
-  { image: match3, name: "Aria Novak", score: "93.1% match" },
-  { image: match4, name: "Kai Brennan", score: "91.7% match" },
-  { image: match6, name: "Leo Strand", score: "89.3% match" },
-  { image: match1, name: "Nina Volkov", score: "87.6% match" },
-];
-
-const conversations = [
-  { avatar: match1, name: "Elara Voss", message: "I was thinking about that design system you mentioned — have you tried using a 4px base grid?", time: "3m ago" },
-  { avatar: match2, name: "Marcus Chen", message: "The new protocol is live. Check the dashboard when you get a chance.", time: "1h ago" },
-  { avatar: match3, name: "Aria Novak", message: "Interesting perspective on brutalist interfaces. Let's discuss more.", time: "4h ago" },
-  { avatar: match4, name: "Kai Brennan", message: "Sent you the updated configuration files.", time: "1d ago" },
-];
-
 const Index = () => {
+  const topMatches = matchProfiles.slice(0, 6);
+  const recentConvos = conversationThreads.slice(0, 4);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <BrutalistNav />
@@ -60,7 +44,9 @@ const Index = () => {
                   NX-0x7F3A-2E91
                 </p>
               </div>
-              <BrutalistButton size="sm">Edit</BrutalistButton>
+              <Link to="/edit-profile">
+                <BrutalistButton size="sm">Edit</BrutalistButton>
+              </Link>
             </div>
 
             <h1 className="text-6xl md:text-8xl lg:text-[8rem] leading-[0.85] mb-6">
@@ -97,27 +83,39 @@ const Index = () => {
           {/* Right Column - Content */}
           <div className="md:col-span-2">
             {/* Matches Grid */}
-            <h2 className="label-micro text-muted-foreground mb-8">Top Matches</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="label-micro text-muted-foreground">Top Matches</h2>
+              <Link to="/matches" className="label-micro text-muted-foreground hover:text-foreground transition-colors">
+                View All →
+              </Link>
+            </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {matches.map((match) => (
+              {topMatches.map((match) => (
                 <MatchCard
-                  key={match.name}
+                  key={match.id}
+                  id={match.id}
                   image={match.image}
                   name={match.name}
-                  score={match.score}
+                  score={`${match.score} match`}
                 />
               ))}
             </div>
 
             {/* Conversations */}
-            <h2 className="label-micro text-muted-foreground mt-16 mb-8">Recent Conversations</h2>
+            <div className="flex items-center justify-between mt-16 mb-8">
+              <h2 className="label-micro text-muted-foreground">Recent Conversations</h2>
+              <Link to="/messages" className="label-micro text-muted-foreground hover:text-foreground transition-colors">
+                View All →
+              </Link>
+            </div>
             <div>
-              {conversations.map((conv) => (
+              {recentConvos.map((conv) => (
                 <ConversationItem
-                  key={conv.name}
+                  key={conv.id}
+                  id={conv.id}
                   avatar={conv.avatar}
                   name={conv.name}
-                  message={conv.message}
+                  message={conv.lastMessage}
                   time={conv.time}
                 />
               ))}
