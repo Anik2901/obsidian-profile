@@ -1,37 +1,41 @@
+import { useEffect, useState } from "react";
 import BrutalistNav from "@/components/BrutalistNav";
 import BrutalistFooter from "@/components/BrutalistFooter";
 import BrutalistButton from "@/components/BrutalistButton";
 import DataRow from "@/components/DataRow";
-import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { participants } from "@/lib/api";
+import type { ParticipantSettings, ProfileVisibility, CoordinatePrecision } from "@/types/api";
 import { toast } from "sonner";
-
-const accountSettings = [
-  { label: "Email", value: "damien@nexus.io" },
-  { label: "Phone", value: "+49 *** *** 4291" },
-  { label: "Plan", value: "Nexus Pro" },
-  { label: "Member Since", value: "2024-08-14" },
-];
-
-interface PrefState {
-  label: string;
-  enabled: boolean;
-}
+import { Link } from "react-router-dom";
 
 const Settings = () => {
-  const [preferences, setPreferences] = useState<PrefState[]>([
-    { label: "Push Notifications", enabled: true },
-    { label: "Email Digest", enabled: false },
-    { label: "Stealth Mode", enabled: true },
-    { label: "Read Receipts", enabled: false },
-    { label: "Auto-Archive", enabled: true },
-  ]);
+  const { user, logout } = useAuth();
+  const [settings, setSettings] = useState<ParticipantSettings | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const togglePref = (index: number) => {
-    setPreferences((prev) =>
-      prev.map((p, i) => (i === index ? { ...p, enabled: !p.enabled } : p))
-    );
-    toast.success("Preference updated");
+  useEffect(() => {
+    participants.getSettings()
+      .then(setSettings)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const updateSetting = async (key: keyof ParticipantSettings, value: any) => {
+    try {
+      const updated = await participants.updateSettings({ [key]: value });
+      setSettings(updated);
+      toast.success("Setting updated");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
+
+  const toggles = settings ? [
+    { label: "Stealth Mode", key: "stealth_mode" as const, value: settings.stealth_mode },
+    { label: "Read Receipts", key: "read_receipts" as const, value: settings.read_receipts },
+    { label: "Auto-Archive", key: "auto_archive" as const, value: settings.auto_archive },
+  ] : [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -43,77 +47,98 @@ const Settings = () => {
           <h1 className="text-5xl md:text-7xl">Settings</h1>
         </div>
 
-        <div className="grid gap-16 md:grid-cols-2 max-w-5xl">
-          {/* Account */}
-          <div>
-            <h2 className="label-micro text-muted-foreground mb-8">Account</h2>
-            {accountSettings.map((row) => (
-              <DataRow key={row.label} label={row.label} value={row.value} />
-            ))}
-            <div className="mt-8">
-              <BrutalistButton size="sm" onClick={() => toast.info("Password change dialog would open here")}>
-                Change Password
-              </BrutalistButton>
-            </div>
-          </div>
-
-          {/* Preferences */}
-          <div>
-            <h2 className="label-micro text-muted-foreground mb-8">Preferences</h2>
+        {loading ? (
+          <p className="label-micro text-muted-foreground animate-pulse">Loading settings...</p>
+        ) : (
+          <div className="grid gap-16 md:grid-cols-2 max-w-5xl">
+            {/* Account */}
             <div>
-              {preferences.map((pref, i) => (
-                <div key={pref.label} className="flex items-center justify-between py-3 brutalist-separator">
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground">{pref.label}</span>
+              <h2 className="label-micro text-muted-foreground mb-8">Account</h2>
+              <DataRow label="DID" value={user?.did?.slice(0, 24) + "..." || "—"} />
+              <DataRow label="Type" value={user?.type || "—"} />
+              <DataRow label="Display Name" value={user?.display_name || "—"} />
+            </div>
+
+            {/* Preferences */}
+            <div>
+              <h2 className="label-micro text-muted-foreground mb-8">Preferences</h2>
+              {toggles.map((t) => (
+                <div key={t.label} className="flex items-center justify-between py-3 brutalist-separator">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">{t.label}</span>
                   <button
-                    onClick={() => togglePref(i)}
+                    onClick={() => updateSetting(t.key, !t.value)}
                     className={`label-micro px-3 py-1 border transition-all duration-200 ${
-                      pref.enabled
-                        ? "border-foreground text-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                      t.value ? "border-foreground text-foreground" : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                     }`}
                   >
-                    {pref.enabled ? "ON" : "OFF"}
+                    {t.value ? "ON" : "OFF"}
                   </button>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Privacy */}
-          <div>
-            <h2 className="label-micro text-muted-foreground mb-8">Privacy</h2>
+            {/* Visibility */}
             <div>
-              {[
-                { label: "Profile Visibility", value: "Verified Only" },
-                { label: "Search Indexing", value: "Disabled" },
-                { label: "Data Retention", value: "90 Days" },
-                { label: "Two-Factor Auth", value: "Enabled" },
-              ].map((row) => (
-                <DataRow key={row.label} label={row.label} value={row.value} />
-              ))}
+              <h2 className="label-micro text-muted-foreground mb-8">Privacy</h2>
+              {settings && (
+                <>
+                  <div className="mb-6">
+                    <p className="label-micro text-muted-foreground mb-3">Profile Visibility</p>
+                    <div className="flex gap-0 border border-border">
+                      {(["public", "matches_only"] as ProfileVisibility[]).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => updateSetting("profile_visibility", v)}
+                          className={`flex-1 py-3 label-micro transition-all duration-200 border-r border-border last:border-r-0 ${
+                            settings.profile_visibility === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {v.replace("_", " ")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="label-micro text-muted-foreground mb-3">Coordinate Precision</p>
+                    <div className="flex gap-0 border border-border">
+                      {(["city", "exact", "hidden"] as CoordinatePrecision[]).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => updateSetting("coordinate_precision", v)}
+                          className={`flex-1 py-3 label-micro transition-all duration-200 border-r border-border last:border-r-0 ${
+                            settings.coordinate_precision === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
 
-          {/* Danger Zone */}
-          <div>
-            <h2 className="label-micro text-destructive mb-8">Danger Zone</h2>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-              These actions are irreversible. Proceed with caution.
-            </p>
-            <div className="flex gap-3">
-              <BrutalistButton size="sm" onClick={() => toast.success("Data export initiated")}>
-                Export Data
-              </BrutalistButton>
-              <BrutalistButton
-                size="sm"
-                onClick={() => toast.error("Account deletion is disabled in demo mode")}
-                className="border-destructive text-destructive hover:bg-destructive hover:text-foreground"
-              >
-                Delete Account
-              </BrutalistButton>
+            {/* Danger Zone */}
+            <div>
+              <h2 className="label-micro text-destructive mb-8">Danger Zone</h2>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                These actions are irreversible. Proceed with caution.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/blocked">
+                  <BrutalistButton size="sm">Blocked Users</BrutalistButton>
+                </Link>
+                <BrutalistButton
+                  size="sm"
+                  onClick={() => { logout(); toast.success("Logged out"); }}
+                  className="border-destructive text-destructive hover:bg-destructive hover:text-foreground"
+                >
+                  Logout
+                </BrutalistButton>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       <BrutalistFooter />
