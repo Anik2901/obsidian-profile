@@ -45,6 +45,12 @@
 
     --success: 142 71% 45%;
 
+    --neon-cyan: 185 100% 55%;
+    --neon-magenta: 325 100% 60%;
+    --neon-violet: 270 100% 65%;
+    --neon-amber: 38 100% 55%;
+    --neon-rose: 350 100% 60%;
+
     --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;

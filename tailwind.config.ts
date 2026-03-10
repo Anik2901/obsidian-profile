@@ -60,6 +60,13 @@ export default {
           400: "hsl(var(--zinc-400))",
         },
         success: "hsl(var(--success))",
+        neon: {
+          cyan: "hsl(var(--neon-cyan))",
+          magenta: "hsl(var(--neon-magenta))",
+          violet: "hsl(var(--neon-violet))",
+          amber: "hsl(var(--neon-amber))",
+          rose: "hsl(var(--neon-rose))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
